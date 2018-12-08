@@ -1,10 +1,12 @@
 # os: windows
+sudo: required
 language: node_js
 node_js:
   - "10"
 script:
     - npm install
     - npm run build
+    - ls
 deploy:
   provider: pages
   skip-cleanup: true
