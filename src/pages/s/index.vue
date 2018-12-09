@@ -17,17 +17,16 @@
 					<h1 v-if="urlValid">Yes</h1>
         </div>
 				<button @click="validURL" v-bind:class="{'disabled': !urlValid }" >Send</button>
-				<NuxtLink to="/1">
-				About page
-			</NuxtLink>
       </div>
 			</div>
     </div>
+				<nuxt-child/>
   </section>
 </template>
 
 <script>
 import AppLogo from '~/components/AppLogo.vue'
+import { ethers } from 'ethers';
 export default {
 	components: {
 		AppLogo

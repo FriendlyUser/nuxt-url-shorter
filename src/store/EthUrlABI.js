@@ -1,4 +1,4 @@
-export const EthUrl = [
+const EthUrlABI = [
             {
                 "constant": false,
                 "inputs": [
@@ -114,3 +114,5 @@ export const EthUrl = [
                         "type": "function"
                     }
             ]
+
+export default EthUrlABI
