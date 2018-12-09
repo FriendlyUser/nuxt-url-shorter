@@ -1,6 +1,6 @@
 <template>
   <section class="container">
-      Prepare to get redirected
+      Prepare to get redirected {{ this.$route.params.id }}
   </section>
 </template>
 
@@ -29,7 +29,7 @@ export default {
             console.log(contract);
         },
         redirect(){
-            var id = window.location.href.split('?id=')[1]
+            var id = this.$route.params.id
             if(!id){
                 return
             }
