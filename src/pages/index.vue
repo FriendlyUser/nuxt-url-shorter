@@ -46,9 +46,11 @@ import AppLogo from '~/components/AppLogo.vue'
 import modal from '~/components/modal.vue'
 import EthUrlABI from '~/store/EthUrlABI'
 import {ethers} from 'ethers'
-let provider = '';
+//import { Web3Provider } from 'ethers/providers';
+
+let provider = ''  //= new ethers.providers.Web3Provider(web3.currentProvider);
 let address = "0xa40d4c7fb56635a8a2a4d47ab7975bdcda57ac2a";
-let contract
+let contract //= new ethers.Contract(address, EthUrlABI, provider.getSigner());
 export default {
 	components: {
 		AppLogo,
@@ -69,10 +71,10 @@ export default {
 	},
 	mounted() {
 		// $("#spinner").hide();
-    this.detectWeb3();
-    this.initContract();
-    this.checkNetwork();
-    this.batchEvents(EthUrlABI, address);
+    this.detectWeb3()
+    this.initContract()
+    this.checkNetwork()
+    this.batchEvents(EthUrlABI, address)
 	},
 	methods: {
 		async validURL() {
@@ -98,30 +100,44 @@ export default {
 					// $(".metamask-network-modal").addClass("is-active");
 			}); 
 		},
-		detectWeb3() {
-				if (typeof web3 !== 'undefined') {
-					// Use Mist/MetaMask's provider
-					web3 = new Web3(web3.currentProvider);
-				} else {
-						// $(".metamask-modal").addClass("is-active");
-						// console.log('METAMASK NOT DETECTED');
-				}
+		async detectWeb3() {
+			console.log('stupid')
+			if (window.ethereum) {
+				window.web3 = new Web3(ethereum);
+					try {
+			// Request account access if needed
+			await ethereum.enable();
+			// Acccounts now exposed
+			web3.eth.sendTransaction({/* ... */});
+					} catch (error) {
+							// User denied account access...
+					}
+			} else if (window.web3) {
+					window.web3 = new Web3(web3.currentProvider);
+					// Acccounts always exposed
+					web3.eth.sendTransaction({/* ... */});
+			}
+			// Non-dapp browsers...
+			else {
+					console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+			}
 		},
 		initContract() {
 			provider = new ethers.providers.Web3Provider(web3.currentProvider);
 			contract = new ethers.Contract(address, EthUrlABI, provider.getSigner());
-    	console.log('e0x Contract Initiated');
+    		console.log('e0x Contract Initiated');
 		},
 		batchEvents(abi, address) {
 			//batch listening of events
-			MyContract = web3.eth.contract(abi);
-			myContractInstance = MyContract.at(address);
-			events = myContractInstance.allEvents({event: 'LinkAdded', fromBlock: 0, toBlock: 'latest'});
+			const MyContract = web3.eth.contract(EthUrlABI);
+			const myContractInstance = MyContract.at(address);
+			const events = myContractInstance.allEvents({event: 'LinkAdded', fromBlock: 0, toBlock: 'latest'});
 			
 			events.watch(function(error, result){
 				console.log(result);
 				//console.log(result.args.url, result.args.linkId.toNumber(), result.blockNumber, result.transactionHash);
-				
+				console.log(error,result)
+				/*
 				var shortUrl = '{0}/s?id={1}'.f(window.location.origin, result.args.linkId.toNumber());
 				var shorterUrl = shortUrl.replace('https://','');
 				var shorterUrl = shorterUrl.replace('http://','');
@@ -132,7 +148,8 @@ export default {
 						<td><a target='_blank' href='https://ropsten.etherscan.io/block/{3}'><code>{3}</code></a></td>\
 						<td><a target='_blank' href='https://ropsten.etherscan.io/tx/{4}'>link</a></td>\
 					</tr>".f(result.args.url,shortUrl,shorterUrl,result.blockNumber,result.transactionHash);
-					console.log(row);
+					**/
+					// console.log(row);
 					// $("#tx-table").prepend(row);
 			})
 		},
@@ -148,10 +165,14 @@ export default {
 			// $("#info").html(""); 
 			// $("#spinner").show();
 			// $('#generate').prop('disabled', true);
-			contract.createNewLink(url)
+			console.log('do something')
+			contract.createNewLink(this.fullURL)
 			.then(tx => {
 				console.log(tx.hash);
-				$("#info").prepend( "<p>waiting for transaction to be mined</p><br>" );
+				// $("#info").prepend( "<p>waiting for transaction to be mined</p><br>" );
+			})
+			.catch(error => {
+				console.log(error)
 			})
 
 			contract.on("LinkAdded", (linkId, linkUrl) => {
@@ -160,7 +181,7 @@ export default {
 							return
 					}
 					// $("#info").html( "<p>transaction confirmed</p> <a target='_blank' href='https://ropsten.etherscan.io/tx/{0}'>view tx on blockchain</a><br>".f(tx.hash) );
-					var shortUrl = '{0}/s?id={1}'.f(window.location.origin, linkId.toNumber());
+					var shortUrl = linkId.toNumber()
 					// $("#info").prepend( "Short URL: <a target='_blank' href='{0}'>{0}</a><br>".f(shortUrl) );
 					console.log("EVENT LISTENER", shortUrl, linkId.toNumber(), linkUrl);
 					//$("#spinner").hide();
