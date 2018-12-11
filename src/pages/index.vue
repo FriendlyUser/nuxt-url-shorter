@@ -4,37 +4,36 @@
       <app-logo />
       <h1 class="title">nuxt-shortener</h1>
       <h2 class="subtitle">Shorten your Urls here</h2>
-			<div class="card">
+	<div class="card">
       <h3 class="paragraph-title">Shorten URL</h3>
-			 <div class="row">
+		<div class="row">
         <div>
-         Full URL:
-					<input 
-						v-model="fullURL"
-						title="fullURL"
-						@change="validURL"
-					/>
-					<h1 v-if="urlValid">Yes</h1>
+            URL:
+			<input
+				class="url-field" 
+				v-model="fullURL"
+				title="fullURL"
+				@change="validURL"
+			/>
+			<button class="addlink" @click="shorten">Send</button>
         </div>
-				<button @click="shorten" v-bind:class="{'disabled': !urlValid }" >Send</button>
-				<NuxtLink to="/1">
-				About page
-			</NuxtLink>
-			    <button
-						type="button"
-						class="btn"
-						@click="showModal"
-					>
-						Open Modal!
-					</button>
-					<modal
-						v-show="isModalVisible"
-						@close="closeModal"
-						v-bind:title="modalTitle"
-						v-bind:content="this.modalContent"
-					/>
-      </div>
-			</div>
+			<!---
+			<button
+				type="button"
+				class="btn"
+				@click="showModal"
+			>
+				Open Modal!
+			</button>
+			-->
+			<modal
+				v-show="isModalVisible"
+				@close="closeModal"
+				v-bind:title="modalTitle"
+				v-bind:content="this.modalContent"
+			/>
+     	 </div>
+		</div>
     </div>
   </section>
 </template>
@@ -77,16 +76,13 @@ export default {
     this.batchEvents(EthUrlABI, address)
 	},
 	methods: {
-		async validURL() {
+		validURL() {
 			var re =/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
 			if(this.fullURL !== '') {
 				this.urlValid = re.test(this.fullURL)
 			}
 			console.log(re.test(this.fullURL))
 			return re.test(this.fullURL)
-		},
-		async addLink() {
-
 		},
 		checkNetwork(){
 			console.log('CHECKING NETWORK');
@@ -157,9 +153,15 @@ export default {
 			this.detectWeb3();
 			// url = document.getElementById("url").value;
 			if(this.fullURL === ''){
-				return window.alert("URL VALUE IS EMPTY");
+				this.modalTitle = 'Url Empty'
+				this.modalContent = 'Please enter in an url.'
+				this.showModal()
+				return 
 			}
 			if(!this.validURL()){
+				this.modalTitle = 'Url Invalid'
+				this.modalContent = 'Please enter in a valid url.'
+				this.showModal()
 				return window.alert("INVALID URL");
 			}
 			// $("#info").html(""); 
@@ -175,26 +177,27 @@ export default {
 				console.log(error)
 			})
 
+			// add this functionality to vue dapp and ipfs dapp
 			contract.on("LinkAdded", (linkId, linkUrl) => {
-					if(linkUrl !== url){
-							console.log('NOT MY EVENT');
-							return
-					}
-					// $("#info").html( "<p>transaction confirmed</p> <a target='_blank' href='https://ropsten.etherscan.io/tx/{0}'>view tx on blockchain</a><br>".f(tx.hash) );
-					var shortUrl = linkId.toNumber()
-					// $("#info").prepend( "Short URL: <a target='_blank' href='{0}'>{0}</a><br>".f(shortUrl) );
-					console.log("EVENT LISTENER", shortUrl, linkId.toNumber(), linkUrl);
-					//$("#spinner").hide();
-					//$('#generate').prop('disabled', false);
-    	})
+				if(linkUrl !== this.fullURL){
+					console.log('NOT MY EVENT');
+					return
+				}
+				// $("#info").html( "<p>transaction confirmed</p> <a target='_blank' href='https://ropsten.etherscan.io/tx/{0}'>view tx on blockchain</a><br>".f(tx.hash) );
+				var shortUrl = linkId.toNumber()
+				// $("#info").prepend( "Short URL: <a target='_blank' href='{0}'>{0}</a><br>".f(shortUrl) );
+				console.log("EVENT LISTENER", shortUrl, linkId.toNumber(), linkUrl);
+				//$("#spinner").hide();
+				//$('#generate').prop('disabled', false);
+    		})
 		},
 		// modal related 
 		showModal() {
-        this.isModalVisible = true;
-      },
-    closeModal() {
-        this.isModalVisible = false;
-    }
+        	this.isModalVisible = true;
+      	},
+		closeModal() {
+			this.isModalVisible = false;
+		}
 	}
 }
 </script>
@@ -245,20 +248,53 @@ export default {
 	padding: 10px;
 }
 
+input.url-field {
+	width: 75%;
+	padding: 12px 20px;
+	margin: 8px 0;
+	box-sizing: border-box;
+}
+input:focus {
+	background-color: lightblue;
+}
+
 .card {
-  /* Add shadows to create the "card" effect */
+  	/* Add shadows to create the "card" effect */
 	background-color: white;
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-  transition: 0.3s;
+	box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+	transition: 0.3s;
 }
 
 /* On mouse-over, add a deeper shadow */
 .card:hover {
-  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+	box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
 }
 
 /* Add some padding inside the card container */
 .card.container {
-  padding: 2px 16px;
+	padding: 2px 16px;
 }
+
+button.addlink {
+  border:1px solid #8bcf54; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:12px;font-family:arial, helvetica, sans-serif; padding: 10px 10px 10px 10px; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;
+ background-color: #a9db80; 
+ background-image: -webkit-gradient(linear, left top, left bottom, from(#a9db80), to(#96c56f));
+ background-image: -webkit-linear-gradient(top, #a9db80, #96c56f);
+ background-image: -moz-linear-gradient(top, #a9db80, #96c56f);
+ background-image: -ms-linear-gradient(top, #a9db80, #96c56f);
+ background-image: -o-linear-gradient(top, #a9db80, #96c56f);
+ background-image: linear-gradient(to bottom, #a9db80, #96c56f);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#a9db80, endColorstr=#96c56f);
+}
+
+button.addlink:hover{
+ border:1px solid #74bf36;
+ background-color: #8ed058; 
+ background-image: -webkit-gradient(linear, left top, left bottom, from(#8ed058), to(#7bb64b));
+ background-image: -webkit-linear-gradient(top, #8ed058, #7bb64b);
+ background-image: -moz-linear-gradient(top, #8ed058, #7bb64b);
+ background-image: -ms-linear-gradient(top, #8ed058, #7bb64b);
+ background-image: -o-linear-gradient(top, #8ed058, #7bb64b);
+ background-image: linear-gradient(to bottom, #8ed058, #7bb64b);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#8ed058, endColorstr=#7bb64b);
+}
+
 </style>

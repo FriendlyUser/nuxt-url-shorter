@@ -16,12 +16,21 @@ install:
 
 script:
   - echo "Skipping tests"
+  # move index.html to 200.html
+  - mv dist/index.html dist/200.html
 
 deploy:
-  provider: pages
+  provider: surge
   skip-cleanup: true
-  github-token: $GITHUB_TOKEN  # Set in travis-ci.org dashboard, marked secure https://docs.travis-ci.com/user/deployment/pages/#Setting-the-GitHub-token
-  target-branch: gh-pages
-  local-dir: dist
+  project: ./dist/
+  domain: url.surge.sh  
   on:
-    branch: master
+    all_branches: true
+# deploy:
+#   provider: pages
+#   skip-cleanup: true
+#   github-token: $GITHUB_TOKEN  # Set in travis-ci.org dashboard, marked secure https://docs.travis-ci.com/user/deployment/pages/#Setting-the-GitHub-token
+#   target-branch: gh-pages
+#   local-dir: dist
+#   on:
+#     branch: master
