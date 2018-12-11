@@ -22,7 +22,7 @@ export default {
         initContract() {
             let address = "0x22559cb4b23daaccfad5715a976310f8f7dbc09b";
             let abi = 
-            provider = ethers.getDefaultProvider('ropsten');
+            provider = ethers.getDefaultProvider('kovan');
             wallet = ethers.Wallet.createRandom();
             wallet = wallet.connect(provider);
             contract = new ethers.Contract(address, abi, wallet);
