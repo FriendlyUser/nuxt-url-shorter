@@ -10,7 +10,7 @@ module.exports = {
 			{
 				hid: 'description',
 				name: 'description',
-				content: 'Nuxt.js and web3 template project'
+				content: 'Nuxtjs Ethereum Url Shortener'
 			}
 		],
 		link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]
