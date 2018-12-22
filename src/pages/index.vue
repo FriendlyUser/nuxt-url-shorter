@@ -15,7 +15,11 @@
 				title="fullURL"
 				@change="validURL"
 			/>
-			<button class="addlink" @click="shorten">Send</button>
+			<button class="addlink" @click="shorten" :disabled="txnPending">Send</button>
+			<Loader v-show="txnPending" />
+			<!-- Link to etherscan based on network, do later, for now hardcode etherscan.-->
+			<p v-show="txnPending"> Transaction being made</p>
+			<a v-show="txnPending"  v-bind:href="txnHashURL">{{this.txHashURL}} {{txHashURL}}</a>	
         </div>
 			<!---
 			<button
@@ -42,6 +46,7 @@
 // add check web3 and other features to make that the application can be loaded, could use my old 
 // logic to check for network ids
 import AppLogo from '~/components/AppLogo.vue'
+import Loader from '~/components/Loader.vue'
 import modal from '~/components/modal.vue'
 import EthUrlABI from '~/store/EthUrlABI'
 import {ethers} from 'ethers'
@@ -53,7 +58,8 @@ let contract //= new ethers.Contract(address, EthUrlABI, provider.getSigner());
 export default {
 	components: {
 		AppLogo,
-		modal
+		modal,
+		Loader
 	},
 	data() {
 		return {
@@ -63,17 +69,18 @@ export default {
 			fullURL: '',
 			urlValid: false,
 			amount: 0,
+			txnPending: false,
+			txnHashURL: '',
 			isModalVisible: false,
 			modalTitle: null,
 			modalContent: null
 		}
 	},
 	mounted() {
-		// $("#spinner").hide();
-    this.detectWeb3()
-    this.initContract()
-    this.checkNetwork()
-    this.batchEvents(EthUrlABI, address)
+		this.detectWeb3()
+		this.initContract()
+		this.checkNetwork()
+		this.batchEvents(EthUrlABI, address)
 	},
 	methods: {
 		validURL() {
@@ -84,38 +91,48 @@ export default {
 			console.log(re.test(this.fullURL))
 			return re.test(this.fullURL)
 		},
-		checkNetwork(){
+		checkNetwork() {
 			console.log('CHECKING NETWORK');
-
 			contract.getLink(1)
 			.then((output) => {
 				console.log('OUTPUT',output);
 			})
 			.catch((err) => {
-					console.log('ERROR',err);
-					// $(".metamask-network-modal").addClass("is-active");
+				console.log('ERROR',err);
+				console.log('Not logged into metamask, please relog and refresh.')
+				this.modalTitle = 'Metamask Locked.'
+				this.modalContent = 'Please login into metamask and refresh.'
+				this.showModal()
 			}); 
 		},
 		async detectWeb3() {
 			console.log('stupid')
 			if (window.ethereum) {
 				window.web3 = new Web3(ethereum);
-					try {
-			// Request account access if needed
-			await ethereum.enable();
-			// Acccounts now exposed
-			web3.eth.sendTransaction({/* ... */});
-					} catch (error) {
-							// User denied account access...
-					}
+				try {
+					// Request account access if needed
+					await ethereum.enable();
+					// Acccounts now exposed
+					web3.eth.sendTransaction({/* ... */})
+				} catch (error) {
+					// User denied account access...
+					// could be that metamask is already open
+					console.log(error)
+					// this.modalTitle = 'Access Denied.'
+					// this.modalContent = 'Please login into metamask and refresh, otherwise you can just enjoy using urls, but cannot make new ones.'
+					// this.showModal()
+				}
 			} else if (window.web3) {
-					window.web3 = new Web3(web3.currentProvider);
-					// Acccounts always exposed
-					web3.eth.sendTransaction({/* ... */});
+				window.web3 = new Web3(web3.currentProvider);
+				// Acccounts always exposed
+				web3.eth.sendTransaction({/* ... */})
 			}
 			// Non-dapp browsers...
 			else {
-					console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+				this.modalTitle = 'Non Dapp Browser Detected.'
+				this.modalContent = 'Oops, looks like you need to install metamask. See https://metamask.io/.'
+				this.showModal()
+				console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
 			}
 		},
 		initContract() {
@@ -162,18 +179,22 @@ export default {
 				this.modalTitle = 'Url Invalid'
 				this.modalContent = 'Please enter in a valid url.'
 				this.showModal()
-				return window.alert("INVALID URL");
+				return 
 			}
 			// $("#info").html(""); 
 			// $("#spinner").show();
 			// $('#generate').prop('disabled', true);
-			console.log('do something')
 			contract.createNewLink(this.fullURL)
 			.then(tx => {
 				console.log(tx.hash);
+				this.txnPending = true
+				this.txnHashURL = 'https://kovan.etherscan.io/' + tx.hash
 				// $("#info").prepend( "<p>waiting for transaction to be mined</p><br>" );
 			})
 			.catch(error => {
+				this.modalTitle = 'Rejected Transaction'
+				this.modalContent = 'Darn, did I mention making links is free.'
+				this.showModal()
 				console.log(error)
 			})
 
@@ -187,8 +208,13 @@ export default {
 				var shortUrl = linkId.toNumber()
 				// $("#info").prepend( "Short URL: <a target='_blank' href='{0}'>{0}</a><br>".f(shortUrl) );
 				console.log("EVENT LISTENER", shortUrl, linkId.toNumber(), linkUrl);
+				this.modalTitle = 'Link Added!'
+				const url = window.location.href + linkId
+				this.modalContent = 'Congrats, your link is available at ' + url
+				this.showModal()
 				//$("#spinner").hide();
 				//$('#generate').prop('disabled', false);
+				this.txnPending = false
     		})
 		},
 		// modal related 
@@ -276,7 +302,7 @@ input:focus {
 }
 
 button.addlink {
-  border:1px solid #8bcf54; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:12px;font-family:arial, helvetica, sans-serif; padding: 10px 10px 10px 10px; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;
+ border:1px solid #8bcf54; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:12px;font-family:arial, helvetica, sans-serif; padding: 10px 10px 10px 10px; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;
  background-color: #a9db80; 
  background-image: -webkit-gradient(linear, left top, left bottom, from(#a9db80), to(#96c56f));
  background-image: -webkit-linear-gradient(top, #a9db80, #96c56f);
@@ -296,5 +322,4 @@ button.addlink:hover{
  background-image: -o-linear-gradient(top, #8ed058, #7bb64b);
  background-image: linear-gradient(to bottom, #8ed058, #7bb64b);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#8ed058, endColorstr=#7bb64b);
 }
-
 </style>

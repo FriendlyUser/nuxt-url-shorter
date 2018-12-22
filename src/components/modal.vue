@@ -55,8 +55,7 @@
         </section>
         <footer class="modal-footer">
           <slot name="footer">
-            I'm the default footer!
-
+            <div class="credits"> By <a href="https://friendlyuser.github.io/"> David Li </a> </div>
             <button
               type="button"
               class="btn-green"
@@ -96,6 +95,10 @@
   .modal-footer {
     padding: 15px;
     display: flex;
+  }
+
+  .modal-footer > .credits {
+    padding-right: 15px;
   }
 
   .modal-header {
