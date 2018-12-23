@@ -5,31 +5,24 @@
       <h1 class="title">nuxt-shortener</h1>
       <h2 class="subtitle">Shorten your Urls here</h2>
 	<div class="card">
-      <h3 class="paragraph-title">Shorten URL</h3>
 		<div class="row">
-        <div>
-            URL:
-			<input
-				class="url-field" 
-				v-model="fullURL"
-				title="fullURL"
-				@change="validURL"
-			/>
-			<button class="addlink" @click="shorten" :disabled="txnPending">Send</button>
-			<Loader v-show="txnPending" />
-			<!-- Link to etherscan based on network, do later, for now hardcode etherscan.-->
-			<p v-show="txnPending"> Transaction being made</p>
-			<a v-show="txnPending"  v-bind:href="txnHashURL">{{this.txHashURL}} {{txHashURL}}</a>	
-        </div>
-			<!---
-			<button
-				type="button"
-				class="btn"
-				@click="showModal"
-			>
-				Open Modal!
-			</button>
-			-->
+			<div>
+				URL:
+				<input
+					class="url-field" 
+					v-model="fullURL"
+					title="fullURL"
+					@change="validURL"
+				/>
+				<button class="addlink" @click="shorten" :disabled="txnPending">Send</button>
+				<br />
+				<Loader v-show="txnPending" />
+				<!-- Link to etherscan based on network, do later, for now hardcode etherscan.-->
+				<p v-show="txnPending">Transaction being made</p>
+				<a target="_blank" v-show="txnPending" v-bind:href="this.txnHashURL">View on Etherscan</a>
+				<span v-show="shortURL !== null">View at: </span>
+				<a v-show="shortURL !== null" v-bind:href="this.shortURL">{{this.shortURL}}</a>
+			</div>
 			<modal
 				v-show="isModalVisible"
 				@close="closeModal"
@@ -63,12 +56,9 @@ export default {
 	},
 	data() {
 		return {
-			tokenName: '',
-			recipentAddress: '',
-			transferReceipt: '',
 			fullURL: '',
 			urlValid: false,
-			amount: 0,
+			shortURL: null,
 			txnPending: false,
 			txnHashURL: '',
 			isModalVisible: false,
@@ -114,6 +104,8 @@ export default {
 					await ethereum.enable();
 					// Acccounts now exposed
 					web3.eth.sendTransaction({/* ... */})
+					// close any message that tells people to open metamask
+					this.closeModal()
 				} catch (error) {
 					// User denied account access...
 					// could be that metamask is already open
@@ -126,6 +118,8 @@ export default {
 				window.web3 = new Web3(web3.currentProvider);
 				// Acccounts always exposed
 				web3.eth.sendTransaction({/* ... */})
+				// close any message that tells people to open metamask
+				this.closeModal()
 			}
 			// Non-dapp browsers...
 			else {
@@ -167,8 +161,7 @@ export default {
 			})
 		},
 		async shorten() {
-			this.detectWeb3();
-			// url = document.getElementById("url").value;
+			// this.detectWeb3();
 			if(this.fullURL === ''){
 				this.modalTitle = 'Url Empty'
 				this.modalContent = 'Please enter in an url.'
@@ -181,22 +174,16 @@ export default {
 				this.showModal()
 				return 
 			}
-			// $("#info").html(""); 
-			// $("#spinner").show();
-			// $('#generate').prop('disabled', true);
-			contract.createNewLink(this.fullURL)
-			.then(tx => {
-				console.log(tx.hash);
+			try {
+				const tx = await contract.createNewLink(this.fullURL)
 				this.txnPending = true
-				this.txnHashURL = 'https://kovan.etherscan.io/' + tx.hash
-				// $("#info").prepend( "<p>waiting for transaction to be mined</p><br>" );
-			})
-			.catch(error => {
+				this.txnHashURL = 'https://kovan.etherscan.io/tx/' + tx.hash
+			} catch(error) {
 				this.modalTitle = 'Rejected Transaction'
 				this.modalContent = 'Darn, did I mention making links is free.'
 				this.showModal()
 				console.log(error)
-			})
+			}
 
 			// add this functionality to vue dapp and ipfs dapp
 			contract.on("LinkAdded", (linkId, linkUrl) => {
@@ -204,7 +191,6 @@ export default {
 					console.log('NOT MY EVENT');
 					return
 				}
-				// $("#info").html( "<p>transaction confirmed</p> <a target='_blank' href='https://ropsten.etherscan.io/tx/{0}'>view tx on blockchain</a><br>".f(tx.hash) );
 				var shortUrl = linkId.toNumber()
 				// $("#info").prepend( "Short URL: <a target='_blank' href='{0}'>{0}</a><br>".f(shortUrl) );
 				console.log("EVENT LISTENER", shortUrl, linkId.toNumber(), linkUrl);
@@ -212,12 +198,10 @@ export default {
 				const url = window.location.href + linkId
 				this.modalContent = 'Congrats, your link is available at ' + url
 				this.showModal()
-				//$("#spinner").hide();
-				//$('#generate').prop('disabled', false);
 				this.txnPending = false
+				this.shortURL = url
     		})
 		},
-		// modal related 
 		showModal() {
         	this.isModalVisible = true;
       	},
