@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="loading-page">
-      <p>Loading...</p>
+      <p>Redirecting...</p>
       <Loader />
     </div>
   </div>
