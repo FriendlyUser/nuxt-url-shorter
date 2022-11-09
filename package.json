@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "ethers": "^4.0.20",
-    "nuxt": "^2.3.4",
+    "nuxt": "^2.15.8",
     "websocket": "^1.0.26"
   },
   "devDependencies": {
